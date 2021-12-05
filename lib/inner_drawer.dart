@@ -11,7 +11,7 @@ import 'package:flutter/widgets.dart';
 
 /// Signature for the callback that's called when a [InnerDrawer] is
 /// opened or closed.
-typedef InnerDrawerCallback = void Function(bool isOpened);
+typedef InnerDrawerCallback = void Function(bool isOpened, InnerDrawerDirection? direction);
 
 /// Signature for when a pointer that is in contact with the screen and moves to the right or left
 /// values between 1 and 0
@@ -142,6 +142,7 @@ class InnerDrawerState extends State<InnerDrawer>
       ColorTween(begin: Colors.black54, end: Colors.transparent);
 
   double _initWidth = _kWidth;
+  double _screenWidth = _kWidth;
   Orientation _orientation = Orientation.portrait;
   InnerDrawerDirection? _position;
 
@@ -213,7 +214,7 @@ class InnerDrawerState extends State<InnerDrawer>
         if (_previouslyOpened != opened) {
           _previouslyOpened = opened;
           if (widget.innerDrawerCallback != null)
-            widget.innerDrawerCallback!(opened);
+            widget.innerDrawerCallback!(opened, _position);
         }
         _ensureHistoryEntry();
         break;
@@ -221,7 +222,7 @@ class InnerDrawerState extends State<InnerDrawer>
         if (_previouslyOpened != opened) {
           _previouslyOpened = opened;
           if (widget.innerDrawerCallback != null)
-            widget.innerDrawerCallback!(opened);
+            widget.innerDrawerCallback!(opened, _position);
         }
         _historyEntry?.remove();
         _historyEntry = null;
@@ -251,7 +252,7 @@ class InnerDrawerState extends State<InnerDrawer>
   }
 
   /// get width of screen after initState
-  void _updateWidth() {
+  void _updateWidth(double screenWidth) {
     WidgetsBinding.instance!.addPostFrameCallback((_) {
       final RenderBox? box =
           _drawerKey.currentContext!.findRenderObject() as RenderBox?;
@@ -262,6 +263,7 @@ class InnerDrawerState extends State<InnerDrawer>
           box.size.width > 300)
         setState(() {
           _initWidth = box.size.width;
+          _screenWidth = screenWidth;
         });
     });
   }
@@ -309,7 +311,7 @@ class InnerDrawerState extends State<InnerDrawer>
 
     final bool opened = _controller.value < 0.5 ? true : false;
     if (opened != _previouslyOpened && widget.innerDrawerCallback != null)
-      widget.innerDrawerCallback!(opened);
+      widget.innerDrawerCallback!(opened, _position);
     _previouslyOpened = opened;
   }
 
@@ -434,7 +436,7 @@ class InnerDrawerState extends State<InnerDrawer>
     final Widget scaffoldChild = Stack(
       children: <Widget?>[widget.scaffold, invC != null ? invC : null]
           .where((a) => a != null)
-          .toList() as List<Widget>,
+          .toList().cast<Widget>(),
     );
 
     Widget container = Container(
@@ -567,9 +569,9 @@ class InnerDrawerState extends State<InnerDrawer>
     //assert(debugCheckHasMaterialLocalizations(context));
 
     /// initialize the correct width
-    if (_initWidth == 400 ||
-        MediaQuery.of(context).orientation != _orientation) {
-      _updateWidth();
+    if (_initWidth == 400 || _screenWidth == 400 ||
+        MediaQuery.of(context).orientation != _orientation || MediaQuery.of(context).size.width != _screenWidth) {
+      _updateWidth(MediaQuery.of(context).size.width);
       _orientation = MediaQuery.of(context).orientation;
     }
 
@@ -617,7 +619,7 @@ class InnerDrawerState extends State<InnerDrawer>
                   ///Trigger
                   _trigger(AlignmentDirectional.centerStart, _leftChild),
                   _trigger(AlignmentDirectional.centerEnd, _rightChild),
-                ].where((a) => a != null).toList() as List<Widget>,
+                ].where((a) => a != null).toList().cast<Widget>(),
               ),
             ),
           ),
