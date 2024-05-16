@@ -566,7 +566,7 @@ class InnerDrawerState extends State<InnerDrawer>
     return Container(
       decoration: widget.backgroundDecoration ??
           BoxDecoration(
-            color: Theme.of(context).backgroundColor,
+            color: Theme.of(context).colorScheme.surface,
           ),
       child: Stack(
         alignment: _drawerInnerAlignment!,
